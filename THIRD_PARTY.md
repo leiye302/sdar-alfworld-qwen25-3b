@@ -5,7 +5,7 @@
   Based on veRL and verl-agent. Their notices remain in fetched source.
   Reproduction changes touch `agent_system/environments/env_manager.py`,
   `agent_system/environments/env_package/alfworld/envs.py`, and
-  `verl/trainer/main_sdar.py`: pooled environment processes, fixed-task validation,
+  `verl/trainer/main_sdar.py`: fixed-task validation with native one-actor-per-environment execution,
   and a read-only evaluation/logging subclass. An additional helper selects
   existing games. Native loss, Actor/Teacher scoring, GRPO, skills and prompts
   are unmodified. See `patches/runtime.patch` and `configs/upstream.json`.

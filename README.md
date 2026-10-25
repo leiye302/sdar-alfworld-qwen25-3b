@@ -97,6 +97,12 @@ python src/report.py
 
 本次四卡拆分继续使用原生SDAR保存/保留逻辑，不复制GRPO仓库的事务式保存改造。max_keep=2是原生保留参数，不承诺异常中断或跨进程续跑后磁盘恰好只有两份；续跑前应检查实际目录及完整性。续训文件、最终HF导出及存盘中间峰值都计入磁盘预算。
 
-12份核心文件及整个小补丁有SHA锁。CPU检查覆盖原生SDAR梯度、Teacher detach、四卡资源/批量、八卡断点拒绝、固定seen140、环境池和shell入口；GitHub Actions从干净Linux检出公开准备上游。**尚未在4×A100上运行正式训练或NCCL/vLLM/FSDP恢复验收，不提供预填成绩。** 首次真机须确认真实环境交互、Teacher/gate/loss/梯度有限、参数更新及完整存盘。
+12份核心文件及整个小补丁有SHA锁。CPU检查覆盖原生SDAR梯度、Teacher detach、四卡资源/批量、八卡断点拒绝、固定seen140、原生环境并发和shell入口；GitHub Actions从干净Linux检出公开准备上游。**尚未在4×A100上运行正式训练或NCCL/vLLM/FSDP恢复验收，不提供预填成绩。** 首次真机须确认真实环境交互、Teacher/gate/loss/梯度有限、参数更新及完整存盘。
 
 包装代码/框架采用Apache-2.0，模型按自身许可使用（1.5B为Apache-2.0，3B为Qwen Research License）。详见 [THIRD_PARTY.md](THIRD_PARTY.md)。
+
+## 2026-10-26 执行设置更正
+
+撤回额外添加的串行环境分组，恢复官方每环境一个 Ray actor、每 actor 0.1 CPU。模型尺寸、获配卡数、训练量、loss、固定 seen140、验证频率和已约定的断点规则不变。未改写上游 rollout、Teacher 或优化器。
+
+已有 checkout 的旧 `.deps/sdar` 仍带旧补丁：在训练停止并保留断点后，将它改名备份，再运行 `python src/setup.py --framework`；或在新的目录重新克隆。不要删除 `runs/`，也不要在运行中的任务里替换依赖。旧配方与新配方的绑定 SHA 不同，禁止绕过恢复校验直接续跑。此更正通过 CPU/干净检出检查不等于已完成 A100 CUDA/NCCL/vLLM 实测。
