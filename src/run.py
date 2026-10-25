@@ -1,4 +1,4 @@
-"""Eight-GPU native SDAR launcher for either public Qwen2.5 backbone."""
+"""Four-GPU native SDAR launcher for either public Qwen2.5 backbone."""
 import argparse
 import contextlib
 import json
@@ -15,7 +15,7 @@ def base_model(size):
     return ROOT / 'models' / load('models.json')[size]['model_id'].split('/')[-1]
 
 
-def config(size, model, assets, run_dir, cpus=64, evaluate=False):
+def config(size, model, assets, run_dir, cpus=32, evaluate=False):
     from hydra import compose, initialize_config_dir
     from omegaconf import OmegaConf
     with initialize_config_dir(config_dir=str(UPSTREAM / 'verl/trainer/config'), version_base=None):
@@ -121,11 +121,11 @@ def launch(args):
     with run_lock(run_dir):
         import torch
         if torch.cuda.device_count() != WORLD_SIZE:
-            raise RuntimeError('Eight allocated CUDA devices are required')
+            raise RuntimeError('Four allocated CUDA devices are required')
         for index in range(WORLD_SIZE):
             props = torch.cuda.get_device_properties(index)
             if props.total_memory < 70 * 1024**3:
-                raise RuntimeError('This recipe targets eight A100 80GB GPUs')
+                raise RuntimeError('This recipe targets four A100 80GB GPUs')
         runtime = Path(tempfile.mkdtemp(prefix='sd-', dir=os.environ.get('SDAR_RUNTIME_ROOT')))
         cfg.ray_init._temp_dir = str(runtime)
         from omegaconf import OmegaConf
@@ -162,8 +162,8 @@ def main():
     parser.add_argument('command', choices=['train', 'eval', 'export'])
     parser.add_argument('--size', choices=['1.5b', '3b'], required=True)
     parser.add_argument('--assets', type=Path, default=Path(os.environ.get('ALFWORLD_DATA', ROOT / 'data/alfworld')))
-    parser.add_argument('--gpus', default=os.environ.get('SDAR_GPUS', '0,1,2,3,4,5,6,7'))
-    parser.add_argument('--cpus', type=int, default=int(os.environ.get('SDAR_CPUS', '64')))
+    parser.add_argument('--gpus', default=os.environ.get('SDAR_GPUS', '0,1,2,3'))
+    parser.add_argument('--cpus', type=int, default=int(os.environ.get('SDAR_CPUS', '32')))
     parser.add_argument('--run-dir', type=Path)
     parser.add_argument('--model', type=Path, help='Exported HF directory, evaluation only')
     parser.add_argument('--resume', action='store_true')
